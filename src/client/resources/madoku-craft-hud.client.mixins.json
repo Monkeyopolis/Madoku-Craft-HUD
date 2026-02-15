@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "madoku.craft.hud.mixin.client",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ExampleClientMixin",
+		"InGameHudAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
