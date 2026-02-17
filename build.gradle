@@ -44,15 +44,21 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	modImplementation "curse.maven:madoku-craft-api-1419561:7612474"
+	modImplementation "curse.maven:madoku-craft-api-1419561:${project.madoku_craft_api_version}"
 	
 }
 
 processResources {
 	inputs.property "version", project.version
+	inputs.property "madoku_craft_api_version", project.madoku_craft_api_version
+	inputs.property "madoku_craft_api_mod_version", project.madoku_craft_api_mod_version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+		expand(
+			"version": inputs.properties.version,
+			"madoku_craft_api_version": inputs.properties.madoku_craft_api_version,
+			"madoku_craft_api_mod_version": inputs.properties.madoku_craft_api_mod_version
+		)
 	}
 }
 

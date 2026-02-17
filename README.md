@@ -1,13 +1,13 @@
 ## Madoku Craft: HUD
 
 Madoku Craft: HUD overhauls Minecraft's HUD system.
-It compacts the HUD and adds additional HUDs to display more information.
-You can enable and disable which HUDs are displayed in the CONFIG file.
+It compacts the UI and adds additional HUDs to display more information.
+You can enable and disable which UIs are displayed in the CONFIG file.
 
 ## Dependencies
 
-This mod requires Fabric API and Madoku Craft API in order to function properly.
-Madoku Craft API provides this mod's the JSON, TICK system.
+This MOD requires Fabric API and Madoku Craft API in order to function properly.
+This MOD uses Madoku Craft API's JSON and TICK systems.
 
 ## Implementation
 

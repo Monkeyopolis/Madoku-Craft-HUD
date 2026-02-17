@@ -1,7 +1,7 @@
 package madoku.craft.hud;
 
 import com.google.gson.JsonObject;
-import madoku.craft.API.system.JsonFeatureSystem;
+import madoku.craft.API.system.MadokuJSONSystem;
 
 public final class HudJsonConfigSystem {
 	public static final String HEALTH_HUD = "health_hud";
@@ -11,9 +11,11 @@ public final class HudJsonConfigSystem {
 	public static final String WORLD_HUD = "world_hud";
 
 	private static final String FEATURE_ID = "madoku_craft_hud";
+	private static final String JSON_FOLDER_ID = "HUD";
+	private static final String JSON_FILE_ID = FEATURE_ID;
 	private static final String HUDS_KEY = "huds";
 
-	private static JsonFeatureSystem.ManagedFeature managedFeature;
+	private static MadokuJSONSystem.ManagedJSON managedFeature;
 	private static JsonObject root;
 
 	private HudJsonConfigSystem() {
@@ -24,7 +26,7 @@ public final class HudJsonConfigSystem {
 			return;
 		}
 
-		managedFeature = JsonFeatureSystem.loadFeature(FEATURE_ID, buildDefaults());
+		managedFeature = MadokuJSONSystem.load(JSON_FOLDER_ID, JSON_FILE_ID, buildDefaults());
 		root = managedFeature.getRoot();
 	}
 
