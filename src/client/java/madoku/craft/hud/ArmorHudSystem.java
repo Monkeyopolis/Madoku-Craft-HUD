@@ -20,6 +20,7 @@ public final class ArmorHudSystem {
 	private static final Identifier ARMOR_FULL_TEXTURE = Identifier.ofVanilla("hud/armor_full");
 	private static final RenderPipeline ARMOR_PIPELINE = RenderPipelines.GUI_TEXTURED;
 	private static final int ARMOR_SIZE = 9;
+	private static final int ARMOR_ROW_SPACING = 10;
 	private static final int ARMOR_TEXT_SPACING = 2;
 	private static final float ARMOR_TEXT_SCALE = 0.8F;
 
@@ -67,7 +68,7 @@ public final class ArmorHudSystem {
 		context.getMatrices().popMatrix();
 
 		int armorX = context.getScaledWindowWidth() / 2 - 91;
-		int armorY = context.getScaledWindowHeight() - HudStatusBarHeightRegistry.getHeight(VanillaHudElements.ARMOR_BAR);
+		int armorY = computeArmorY(context);
 
 		context.drawGuiTexture(ARMOR_PIPELINE, ARMOR_EMPTY_TEXTURE, armorX, armorY, ARMOR_SIZE, ARMOR_SIZE);
 
@@ -91,6 +92,17 @@ public final class ArmorHudSystem {
 			0xFFFFFFFF
 		);
 		context.getMatrices().popMatrix();
+	}
+
+	private static int computeArmorY(DrawContext context) {
+		int windowHeight = context.getScaledWindowHeight();
+
+		if (HudJsonConfigSystem.isEnabled(HudJsonConfigSystem.HEALTH_HUD)) {
+			int healthY = windowHeight - HudStatusBarHeightRegistry.getHeight(VanillaHudElements.HEALTH_BAR);
+			return healthY - ARMOR_ROW_SPACING;
+		}
+
+		return windowHeight - HudStatusBarHeightRegistry.getHeight(VanillaHudElements.ARMOR_BAR);
 	}
 
 	private static Identifier selectArmorFillTexture() {
