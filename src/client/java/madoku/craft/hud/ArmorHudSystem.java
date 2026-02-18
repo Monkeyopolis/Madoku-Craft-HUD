@@ -76,7 +76,7 @@ public final class ArmorHudSystem {
 			context.drawGuiTexture(ARMOR_PIPELINE, fillTexture, armorX, armorY, ARMOR_SIZE, ARMOR_SIZE);
 		}
 
-		String armorText = "Armor: " + cachedArmor + "/20";
+		String armorText = "Armor: " + cachedArmor;
 		TextRenderer textRenderer = client.textRenderer;
 		int textX = armorX + ARMOR_SIZE + ARMOR_TEXT_SPACING;
 		int textY = armorY + 1;

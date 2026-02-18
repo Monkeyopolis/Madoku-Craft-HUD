@@ -12,6 +12,7 @@ import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.tag.FluidTags;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 
 public final class OxygenHudSystem {
@@ -21,14 +22,21 @@ public final class OxygenHudSystem {
 	private static final RenderPipeline OXYGEN_PIPELINE = RenderPipelines.GUI_TEXTURED;
 	private static final int OXYGEN_SIZE = 9;
 	private static final int OXYGEN_TEXT_SPACING = 2;
-	private static final int OXYGEN_X_OFFSET_RIGHT = 3;
+	private static final int OXYGEN_X_OFFSET_RIGHT = 4;
+	private static final int OXYGEN_RIGHT_EDGE = 91;
+	private static final int SECOND_LEFT_VANILLA_AIR_SLOT_INDEX = 8;
 	private static final float OXYGEN_TEXT_SCALE = 0.8F;
-	private static final int POP_TICKS_PER_POINT_LOSS = 2;
+	private static final int POP_TICKS_PER_SECOND_LOSS = 2;
+	private static final String OXYGEN_TEXT_PREFIX = "Oxygen: ";
+	private static final int TICKS_PER_SECOND = 20;
+	private static final int MIN_MAX_AIR = 1;
+	private static final int OFFSET_BASELINE_CURRENT = 15;
+	private static final int OFFSET_BASELINE_MAX = 15;
 
 	private static int cachedAir = 300;
 	private static int cachedMaxAir = 300;
 	private static int cachedOxygenPoints = 10;
-	private static int previousOxygenPoints = 10;
+	private static int previousDisplayedSeconds = -1;
 	private static int popTicksRemaining = 0;
 
 	private OxygenHudSystem() {
@@ -41,14 +49,16 @@ public final class OxygenHudSystem {
 			cachedAir = Math.max(0, player.getAir());
 			cachedMaxAir = Math.max(1, player.getMaxAir());
 			cachedOxygenPoints = toOxygenPoints(cachedAir, cachedMaxAir);
+			int currentDisplayedSeconds = toDisplaySeconds(cachedAir);
 
-			if (cachedOxygenPoints < previousOxygenPoints && cachedOxygenPoints > 0) {
-				popTicksRemaining = POP_TICKS_PER_POINT_LOSS;
+			if (previousDisplayedSeconds >= 0 && currentDisplayedSeconds < previousDisplayedSeconds && currentDisplayedSeconds > 0) {
+				popTicksRemaining = POP_TICKS_PER_SECOND_LOSS;
+				playOxygenPopSound(player);
 			} else if (popTicksRemaining > 0) {
 				popTicksRemaining--;
 			}
 
-			previousOxygenPoints = cachedOxygenPoints;
+			previousDisplayedSeconds = currentDisplayedSeconds;
 		});
 
 		HudElementRegistry.replaceElement(VanillaHudElements.AIR_BAR, oldElement ->
@@ -73,22 +83,15 @@ public final class OxygenHudSystem {
 			return;
 		}
 
-		// Keep vanilla air-bar timing/sounds in sync without rendering the original visuals.
-		context.getMatrices().pushMatrix();
-		context.getMatrices().translate(-10000.0F, -10000.0F);
-		oldElement.render(context, tickCounter);
-		context.getMatrices().popMatrix();
-
-		int oxygenRightEdge = context.getScaledWindowWidth() / 2 + 91;
-		int secondLeftVanillaAirSlotIndex = 8;
-		int oxygenX = oxygenRightEdge - OXYGEN_SIZE - (secondLeftVanillaAirSlotIndex * 8) + OXYGEN_X_OFFSET_RIGHT;
-		int oxygenY = context.getScaledWindowHeight() - HudStatusBarHeightRegistry.getHeight(VanillaHudElements.AIR_BAR);
+		// We fully control oxygen visuals/sounds so second-based timing stays consistent.
 
 		int oxygenPoints = cachedOxygenPoints;
+		String oxygenText = buildOxygenTextFromSeconds(cachedAir, cachedMaxAir);
+		TextRenderer textRenderer = client.textRenderer;
+		int oxygenX = computeOxygenX(context, textRenderer, oxygenText, cachedMaxAir);
+		int oxygenY = context.getScaledWindowHeight() - HudStatusBarHeightRegistry.getHeight(VanillaHudElements.AIR_BAR);
 		context.drawGuiTexture(OXYGEN_PIPELINE, selectOxygenTexture(oxygenPoints), oxygenX, oxygenY, OXYGEN_SIZE, OXYGEN_SIZE);
 
-		String oxygenText = "Oxygen: " + oxygenPoints + "/10";
-		TextRenderer textRenderer = client.textRenderer;
 		int textX = oxygenX + OXYGEN_SIZE + OXYGEN_TEXT_SPACING;
 		int textY = oxygenY + 1;
 
@@ -119,5 +122,40 @@ public final class OxygenHudSystem {
 		}
 
 		return OXYGEN_FULL_TEXTURE;
+	}
+
+	private static int computeOxygenX(DrawContext context, TextRenderer textRenderer, String oxygenText, int maxAir) {
+		int oxygenRightEdge = context.getScaledWindowWidth() / 2 + OXYGEN_RIGHT_EDGE;
+		String referenceText = buildOffsetBaselineText();
+		int referenceTextWidth = getScaledTextWidth(textRenderer, referenceText, OXYGEN_TEXT_SCALE);
+		int currentTextWidth = getScaledTextWidth(textRenderer, oxygenText, OXYGEN_TEXT_SCALE);
+		int baseX = oxygenRightEdge - OXYGEN_SIZE - (SECOND_LEFT_VANILLA_AIR_SLOT_INDEX * 8) + OXYGEN_X_OFFSET_RIGHT;
+
+		// Reflow around the baseline: narrower text moves right, wider text moves left.
+		return baseX + (referenceTextWidth - currentTextWidth);
+	}
+
+	private static int getScaledTextWidth(TextRenderer textRenderer, String text, float scale) {
+		return Math.round(textRenderer.getWidth(text) * scale);
+	}
+
+	private static String buildOxygenTextFromSeconds(int currentAir, int maxAir) {
+		int normalizedMaxAir = Math.max(MIN_MAX_AIR, maxAir);
+		int normalizedCurrentAir = Math.max(0, Math.min(normalizedMaxAir, currentAir));
+		int maxSeconds = Math.max(1, toDisplaySeconds(normalizedMaxAir));
+		int currentSeconds = Math.max(0, Math.min(maxSeconds, toDisplaySeconds(normalizedCurrentAir)));
+		return OXYGEN_TEXT_PREFIX + currentSeconds + "/" + maxSeconds;
+	}
+
+	private static String buildOffsetBaselineText() {
+		return OXYGEN_TEXT_PREFIX + OFFSET_BASELINE_CURRENT + "/" + OFFSET_BASELINE_MAX;
+	}
+
+	private static int toDisplaySeconds(int ticks) {
+		return (int) Math.ceil(Math.max(0, ticks) / (double) TICKS_PER_SECOND);
+	}
+
+	private static void playOxygenPopSound(PlayerEntity player) {
+		player.playSound(SoundEvents.BLOCK_BUBBLE_COLUMN_BUBBLE_POP, 0.75F, 1.0F);
 	}
 }

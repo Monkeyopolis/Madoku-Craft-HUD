@@ -100,8 +100,8 @@ public final class HealthHudSystem {
 			context.drawGuiTexture(HEART_PIPELINE, fillTexture, heartX, heartY, HEART_SIZE, HEART_SIZE);
 		}
 
-		int shownHealth = Math.round(cachedHealth);
-		int shownMaxHealth = Math.round(cachedMaxHealth);
+		String shownHealth = formatQuarterValue(cachedHealth);
+		String shownMaxHealth = formatQuarterValue(cachedMaxHealth);
 		String healthText = "Health: " + shownHealth + "/" + shownMaxHealth;
 
 		TextRenderer textRenderer = client.textRenderer;
@@ -178,5 +178,19 @@ public final class HealthHudSystem {
 			return blinking ? ABSORBING_HALF_BLINKING_TEXTURE : ABSORBING_HALF_TEXTURE;
 		}
 		return blinking ? ABSORBING_FULL_BLINKING_TEXTURE : ABSORBING_FULL_TEXTURE;
+	}
+
+	private static String formatQuarterValue(float value) {
+		int quarterUnits = Math.round(value * 4.0F);
+		int whole = quarterUnits / 4;
+		int quarterRemainder = Math.abs(quarterUnits % 4);
+
+		return switch (quarterRemainder) {
+			case 0 -> Integer.toString(whole);
+			case 1 -> whole + ".25";
+			case 2 -> whole + ".5";
+			case 3 -> whole + ".75";
+			default -> Integer.toString(whole);
+		};
 	}
 }
