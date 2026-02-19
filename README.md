@@ -7,7 +7,7 @@ You can enable and disable which UIs are displayed in the CONFIG file.
 ## Dependencies
 
 This MOD requires Fabric API and Madoku Craft API in order to function properly.
-This MOD uses Madoku Craft API's JSON and TICK systems.
+This MOD uses Madoku Craft API's JSON, TICK, and Debug systems.
 
 ## Implementation
 

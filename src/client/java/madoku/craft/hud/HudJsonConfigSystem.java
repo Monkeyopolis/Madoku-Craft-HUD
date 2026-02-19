@@ -28,14 +28,27 @@ public final class HudJsonConfigSystem {
 
 		managedFeature = MadokuJSONSystem.load(JSON_FOLDER_ID, JSON_FILE_ID, buildDefaults());
 		root = managedFeature.getRoot();
+
+		HudDebugSystem.info("Loaded HUD config at {}.", managedFeature.getPath());
+		HudDebugSystem.info(
+			"HUD toggles: health={}, hunger={}, armor={}, oxygen={}, world={}.",
+			readEnabled(HEALTH_HUD, true),
+			readEnabled(HUNGER_HUD, true),
+			readEnabled(ARMOR_HUD, true),
+			readEnabled(OXYGEN_HUD, true),
+			readEnabled(WORLD_HUD, true)
+		);
 	}
 
 	public static boolean isEnabled(String hudKey) {
 		init();
+		return readEnabled(hudKey, true);
+	}
 
+	private static boolean readEnabled(String hudKey, boolean fallback) {
 		JsonObject huds = root.getAsJsonObject(HUDS_KEY);
 		if (huds == null || !huds.has(hudKey)) {
-			return true;
+			return fallback;
 		}
 
 		return huds.get(hudKey).getAsBoolean();

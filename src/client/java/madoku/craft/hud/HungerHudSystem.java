@@ -178,6 +178,11 @@ public final class HungerHudSystem {
 			try {
 				Method method = hungerManagerClass.getMethod(methodName);
 				if (isIntLikeType(method.getReturnType())) {
+					HudDebugSystem.info(
+						"Using hunger max resolver method {}#{}().",
+						hungerManagerClass.getName(),
+						methodName
+					);
 					return manager -> invokeIntMethod(method, manager);
 				}
 			} catch (NoSuchMethodException ignored) {
@@ -189,6 +194,11 @@ public final class HungerHudSystem {
 			try {
 				Field field = hungerManagerClass.getField(fieldName);
 				if (isIntLikeType(field.getType())) {
+					HudDebugSystem.info(
+						"Using hunger max resolver field {}#{}.",
+						hungerManagerClass.getName(),
+						fieldName
+					);
 					return manager -> readIntField(field, manager);
 				}
 			} catch (NoSuchFieldException ignored) {
@@ -196,6 +206,11 @@ public final class HungerHudSystem {
 			}
 		}
 
+		HudDebugSystem.info(
+			"No hunger max resolver found for {}; defaulting to {}.",
+			hungerManagerClass.getName(),
+			DEFAULT_MAX_FOOD_LEVEL
+		);
 		return manager -> DEFAULT_MAX_FOOD_LEVEL;
 	}
 
