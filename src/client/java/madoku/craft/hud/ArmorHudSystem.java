@@ -31,17 +31,17 @@ public final class ArmorHudSystem {
 	}
 
 	public static void init() {
-		MadokuClientTickSystem.init();
-
 		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) ->
-		{
-			cachedArmor = Math.max(0, player.getArmor());
-			cachedArmorPieces = countArmorPieces(player);
-		}
+			updateCache(player)
 		);
 
 		HudElementRegistry.replaceElement(VanillaHudElements.ARMOR_BAR, oldElement ->
 			(context, tickCounter) -> renderArmor(context, tickCounter, oldElement));
+	}
+
+	private static void updateCache(PlayerEntity player) {
+		cachedArmor = Math.max(0, player.getArmor());
+		cachedArmorPieces = countArmorPieces(player);
 	}
 
 	private static void renderArmor(DrawContext context, net.minecraft.client.render.RenderTickCounter tickCounter, HudElement oldElement) {

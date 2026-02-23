@@ -27,23 +27,26 @@ public final class WorldHudSystem {
 	}
 
 	public static void init() {
-		MadokuClientTickSystem.init();
-		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) -> {
-			long timeOfDay = player.getEntityWorld().getTimeOfDay();
-			long dayTicks = Math.floorMod(timeOfDay, 24000L);
-
-			cachedDay = (timeOfDay / 24000L) + 1L;
-			int hours = (int) ((dayTicks / 1000L + 6L) % 24L);
-			int minutes = (int) ((dayTicks % 1000L) * 60L / 1000L);
-			cachedTimeText = String.format(Locale.ROOT, "%02d:%02d", hours, minutes);
-			cachedBiomeName = getBiomeName(player);
-		});
+		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) ->
+			updateCache(player)
+		);
 
 		HudElementRegistry.attachElementAfter(
 			VanillaHudElements.MISC_OVERLAYS,
 			WORLD_HUD_ID,
 			WorldHudSystem::render
 		);
+	}
+
+	private static void updateCache(PlayerEntity player) {
+		long timeOfDay = player.getEntityWorld().getTimeOfDay();
+		long dayTicks = Math.floorMod(timeOfDay, 24000L);
+
+		cachedDay = (timeOfDay / 24000L) + 1L;
+		int hours = (int) ((dayTicks / 1000L + 6L) % 24L);
+		int minutes = (int) ((dayTicks % 1000L) * 60L / 1000L);
+		cachedTimeText = String.format(Locale.ROOT, "%02d:%02d", hours, minutes);
+		cachedBiomeName = getBiomeName(player);
 	}
 
 	private static void render(DrawContext context, net.minecraft.client.render.RenderTickCounter tickCounter) {

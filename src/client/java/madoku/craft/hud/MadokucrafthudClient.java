@@ -1,5 +1,6 @@
 package madoku.craft.hud;
 
+import madoku.craft.API.system.MadokuClientTickSystem;
 import net.fabricmc.api.ClientModInitializer;
 
 public class MadokucrafthudClient implements ClientModInitializer {
@@ -9,6 +10,8 @@ public class MadokucrafthudClient implements ClientModInitializer {
 
 		HudDebugSystem.info("Initializing {}.", "HudJsonConfigSystem");
 		HudJsonConfigSystem.init();
+		HudDebugSystem.info("Initializing {}.", "MadokuClientTickSystem");
+		MadokuClientTickSystem.init();
 		HudDebugSystem.info("Initializing {}.", "HealthHudSystem");
 		HealthHudSystem.init();
 		HudDebugSystem.info("Initializing {}.", "HungerHudSystem");

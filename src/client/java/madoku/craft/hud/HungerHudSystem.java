@@ -41,9 +41,7 @@ public final class HungerHudSystem {
 	private static final String[] MAX_FOOD_METHOD_NAMES = {
 		"getMaxFoodLevel",
 		"getMaxFood",
-		"getMaxHunger",
-		"madoku_craft$getMaxFoodLevel",
-		"madoku$getMaxFoodLevel"
+		"getMaxHunger"
 	};
 	private static final String[] MAX_FOOD_FIELD_NAMES = {
 		"maxFoodLevel",
@@ -59,13 +57,9 @@ public final class HungerHudSystem {
 	}
 
 	public static void init() {
-		MadokuClientTickSystem.init();
-
-		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) -> {
-			int resolvedMaxFoodLevel = Math.max(MIN_MAX_FOOD_LEVEL, resolveMaxFoodLevel(player.getHungerManager()));
-			cachedMaxFoodLevel = resolvedMaxFoodLevel;
-			cachedFoodLevel = Math.max(0, Math.min(resolvedMaxFoodLevel, player.getHungerManager().getFoodLevel()));
-		});
+		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) ->
+			updateCache(player)
+		);
 
 		HudElementRegistry.replaceElement(VanillaHudElements.FOOD_BAR, oldElement ->
 			(context, tickCounter) -> renderFood(context, tickCounter, oldElement));
@@ -212,6 +206,12 @@ public final class HungerHudSystem {
 			DEFAULT_MAX_FOOD_LEVEL
 		);
 		return manager -> DEFAULT_MAX_FOOD_LEVEL;
+	}
+
+	private static void updateCache(PlayerEntity player) {
+		int resolvedMaxFoodLevel = Math.max(MIN_MAX_FOOD_LEVEL, resolveMaxFoodLevel(player.getHungerManager()));
+		cachedMaxFoodLevel = resolvedMaxFoodLevel;
+		cachedFoodLevel = Math.max(0, Math.min(resolvedMaxFoodLevel, player.getHungerManager().getFoodLevel()));
 	}
 
 	private static boolean isIntLikeType(Class<?> type) {

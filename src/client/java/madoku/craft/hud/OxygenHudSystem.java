@@ -43,26 +43,28 @@ public final class OxygenHudSystem {
 	}
 
 	public static void init() {
-		MadokuClientTickSystem.init();
-
-		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) -> {
-			cachedAir = Math.max(0, player.getAir());
-			cachedMaxAir = Math.max(1, player.getMaxAir());
-			cachedOxygenPoints = toOxygenPoints(cachedAir, cachedMaxAir);
-			int currentDisplayedSeconds = toDisplaySeconds(cachedAir);
-
-			if (previousDisplayedSeconds >= 0 && currentDisplayedSeconds < previousDisplayedSeconds && currentDisplayedSeconds > 0) {
-				popTicksRemaining = POP_TICKS_PER_SECOND_LOSS;
-				playOxygenPopSound(player);
-			} else if (popTicksRemaining > 0) {
-				popTicksRemaining--;
-			}
-
-			previousDisplayedSeconds = currentDisplayedSeconds;
-		});
+		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) ->
+			updateCache(player)
+		);
 
 		HudElementRegistry.replaceElement(VanillaHudElements.AIR_BAR, oldElement ->
 			(context, tickCounter) -> renderOxygen(context, tickCounter, oldElement));
+	}
+
+	private static void updateCache(PlayerEntity player) {
+		cachedAir = Math.max(0, player.getAir());
+		cachedMaxAir = Math.max(1, player.getMaxAir());
+		cachedOxygenPoints = toOxygenPoints(cachedAir, cachedMaxAir);
+		int currentDisplayedSeconds = toDisplaySeconds(cachedAir);
+
+		if (previousDisplayedSeconds >= 0 && currentDisplayedSeconds < previousDisplayedSeconds && currentDisplayedSeconds > 0) {
+			popTicksRemaining = POP_TICKS_PER_SECOND_LOSS;
+			playOxygenPopSound(player);
+		} else if (popTicksRemaining > 0) {
+			popTicksRemaining--;
+		}
+
+		previousDisplayedSeconds = currentDisplayedSeconds;
 	}
 
 	private static void renderOxygen(DrawContext context, net.minecraft.client.render.RenderTickCounter tickCounter, HudElement oldElement) {

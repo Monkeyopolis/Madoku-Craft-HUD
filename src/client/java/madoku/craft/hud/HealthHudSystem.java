@@ -40,15 +40,17 @@ public final class HealthHudSystem {
 	}
 
 	public static void init() {
-		MadokuClientTickSystem.init();
-
-		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) -> {
-			cachedHealth = Math.max(0.0F, player.getHealth());
-			cachedMaxHealth = Math.max(1.0F, player.getMaxHealth());
-		});
+		MadokuClientTickSystem.registerPlayer(MadokuClientTickSystem.Phase.END, (client, player) ->
+			updateCache(player)
+		);
 
 		HudElementRegistry.replaceElement(VanillaHudElements.HEALTH_BAR, oldElement ->
 			(context, tickCounter) -> render(context, tickCounter, oldElement));
+	}
+
+	private static void updateCache(PlayerEntity player) {
+		cachedHealth = Math.max(0.0F, player.getHealth());
+		cachedMaxHealth = Math.max(1.0F, player.getMaxHealth());
 	}
 
 	private static void render(DrawContext context, net.minecraft.client.render.RenderTickCounter tickCounter, HudElement oldElement) {

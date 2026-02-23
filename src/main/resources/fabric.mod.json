@@ -23,7 +23,6 @@
 		]
 	},
 	"mixins": [
-		"madoku-craft-hud.mixins.json",
 		{
 			"config": "madoku-craft-hud.client.mixins.json",
 			"environment": "client"
