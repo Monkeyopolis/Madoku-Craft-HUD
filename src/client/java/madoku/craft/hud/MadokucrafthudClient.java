@@ -1,28 +1,13 @@
 package madoku.craft.hud;
 
-import madoku.craft.API.system.MadokuClientTickSystem;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
 public class MadokucrafthudClient implements ClientModInitializer {
-	@Override
-	public void onInitializeClient() {
-		HudDebugSystem.info("Client entrypoint started.");
-
-		HudDebugSystem.info("Initializing {}.", "HudJsonConfigSystem");
-		HudJsonConfigSystem.init();
-		HudDebugSystem.info("Initializing {}.", "MadokuClientTickSystem");
-		MadokuClientTickSystem.init();
-		HudDebugSystem.info("Initializing {}.", "HealthHudSystem");
-		HealthHudSystem.init();
-		HudDebugSystem.info("Initializing {}.", "HungerHudSystem");
-		HungerHudSystem.init();
-		HudDebugSystem.info("Initializing {}.", "ArmorHudSystem");
-		ArmorHudSystem.init();
-		HudDebugSystem.info("Initializing {}.", "OxygenHudSystem");
-		OxygenHudSystem.init();
-		HudDebugSystem.info("Initializing {}.", "WorldHudSystem");
-		WorldHudSystem.init();
-
-		HudDebugSystem.info("Client entrypoint finished.");
-	}
+    @Override
+    public void onInitializeClient() {
+        HudJsonConfigSystem.initialize();
+        MadokuHud.initialize();
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> MadokuHud.clearOxygenHudState());
+    }
 }

@@ -2,18 +2,20 @@
 	"schemaVersion": 1,
 	"id": "madoku-craft-hud",
 	"version": "${version}",
-	"name": "madoku-craft-hud",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Madoku Craft HUD",
+	"description": "Custom HUD overlays for Madoku Craft using API time systems and vanilla player stats.",
 	"authors": [
-		"Me!"
+		"Madoku Craft"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://modrinth.com/mod/madoku-craft-hud"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/madoku-craft-hud/icon.png",
 	"environment": "*",
+	"mixins": [
+		"madoku-craft-hud.mixins.json"
+	],
 	"entrypoints": {
 		"main": [
 			"madoku.craft.hud.Madokucrafthud"
@@ -22,12 +24,6 @@
 			"madoku.craft.hud.MadokucrafthudClient"
 		]
 	},
-	"mixins": [
-		{
-			"config": "madoku-craft-hud.client.mixins.json",
-			"environment": "client"
-		}
-	],
 	"depends": {
 		"fabricloader": ">=0.18.4",
 		"minecraft": "~1.21.11",
