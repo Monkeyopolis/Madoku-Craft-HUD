@@ -234,8 +234,9 @@ public final class MadokuHud {
         oldElement.render(context, tickCounter);
         context.pose().popMatrix();
 
-        int maxHunger = VANILLA_MAX_FOOD_LEVEL;
-        int currentHunger = clampInt(player.getFoodData().getFoodLevel(), 0, maxHunger);
+        int reportedHunger = Math.max(0, player.getFoodData().getFoodLevel());
+        int maxHunger = Math.max(VANILLA_MAX_FOOD_LEVEL, reportedHunger);
+        int currentHunger = clampInt(reportedHunger, 0, maxHunger);
         float hungerPercent = currentHunger / (float) Math.max(1, maxHunger);
 
         String hungerText = "Hunger: " + currentHunger + "/" + maxHunger;
@@ -348,7 +349,8 @@ public final class MadokuHud {
         }
 
         String oxygenText = buildOxygenTextFromSeconds(cachedAirSupply, cachedMaxAirSupply);
-        int oxygenX = computeOxygenX(context, client, oxygenText);
+        int oxygenMaxSeconds = Math.max(1, toDisplaySeconds(cachedMaxAirSupply));
+        int oxygenX = computeOxygenX(context, client, oxygenText, oxygenMaxSeconds);
         int oxygenY = context.guiHeight() - HudStatusBarHeightRegistry.getHeight(VanillaHudElements.AIR_BAR);
         context.blitSprite(OXYGEN_PIPELINE, selectOxygenTexture(cachedOxygenPoints), oxygenX, oxygenY, OXYGEN_SIZE, OXYGEN_SIZE);
 
@@ -453,9 +455,10 @@ public final class MadokuHud {
         return baseX + (baselineWidth - currentWidth);
     }
 
-    private static int computeOxygenX(GuiGraphics context, Minecraft client, String oxygenText) {
+    private static int computeOxygenX(GuiGraphics context, Minecraft client, String oxygenText, int configuredMaxSeconds) {
         int oxygenRightEdge = context.guiWidth() / 2 + OXYGEN_RIGHT_EDGE;
-        String baselineText = "Oxygen: " + OXYGEN_BASELINE_SECONDS + "/" + OXYGEN_BASELINE_SECONDS;
+        int baselineMax = Math.max(OXYGEN_BASELINE_SECONDS, configuredMaxSeconds);
+        String baselineText = "Oxygen: " + baselineMax + "/" + baselineMax;
         int baselineWidth = getScaledTextWidth(client, baselineText, OXYGEN_TEXT_SCALE);
         int currentWidth = getScaledTextWidth(client, oxygenText, OXYGEN_TEXT_SCALE);
         int baseX = oxygenRightEdge - OXYGEN_SIZE - (SECOND_LEFT_VANILLA_AIR_SLOT_INDEX * 8) + OXYGEN_X_OFFSET_RIGHT;
