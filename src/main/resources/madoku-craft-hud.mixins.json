@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [
-    "client.GuiAccessor"
+    "client.GuiAccessor",
+    "client.GuiHudBarsMixin"
   ],
   "injectors": {
     "defaultRequire": 1
