@@ -1,6 +1,9 @@
 package madoku.craft.hud;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import madoku.craft.config.StaticJsonSystem;
 import madoku.craft.hud.mixin.client.GuiAccessor;
 import madoku.craft.time.MadokuTime;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
@@ -20,10 +23,15 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Locale;
 
 public final class MadokuHud {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MadokuHud.class);
     private static final Identifier MADOKU_HUD_ID = Identifier.fromNamespaceAndPath(Madokucrafthud.MOD_ID, "madoku_hud");
     private static final RenderPipeline HEART_PIPELINE = RenderPipelines.GUI_TEXTURED;
     private static final Identifier HEART_EMPTY_TEXTURE = Identifier.withDefaultNamespace("hud/heart/container");
@@ -82,7 +90,15 @@ public final class MadokuHud {
     private static final int COLOR = 0xFFFFFFFF;
     private static final float HEALTH_STEP = 0.125F;
     private static final float ARMOR_STEP = 0.25F;
+    private static final boolean DEFAULT_WORLD_HUD_ENABLED = true;
+    private static final boolean DEFAULT_HEALTH_HUD_ENABLED = true;
+    private static final boolean DEFAULT_HUNGER_HUD_ENABLED = true;
+    private static final boolean DEFAULT_ARMOR_HUD_ENABLED = true;
+    private static final boolean DEFAULT_OXYGEN_HUD_ENABLED = true;
+    private static final String HUD_CONFIG_FOLDER_NAME = "madoku-craft-hud";
+    private static final String HUD_CONFIG_FILE_NAME = "madoku-hud";
     private static volatile boolean initialized = false;
+    private static volatile Settings settings = Settings.defaults();
     private static volatile int cachedAirSupply = 300;
     private static volatile int cachedMaxAirSupply = 300;
     private static volatile int cachedOxygenPoints = 10;
@@ -97,6 +113,7 @@ public final class MadokuHud {
         if (initialized) {
             return;
         }
+        loadClientConfig();
         initialized = true;
         HudElementRegistry.attachElementAfter(VanillaHudElements.MISC_OVERLAYS, MADOKU_HUD_ID, MadokuHud::renderWorldHud);
         HudElementRegistry.replaceElement(VanillaHudElements.HEALTH_BAR, oldElement -> (context, tickCounter) ->
@@ -114,7 +131,7 @@ public final class MadokuHud {
     }
 
     private static void renderWorldHud(GuiGraphics context, DeltaTracker tickCounter) {
-        if (!HudJsonConfigSystem.worldHudEnabled()) {
+        if (!settings.worldHudEnabled) {
             return;
         }
 
@@ -125,9 +142,10 @@ public final class MadokuHud {
             return;
         }
 
-        long dayTime = level.getDayTime();
-        long day = MadokuTime.getDay(dayTime);
-        int totalMinutes = MadokuTime.getTotalMinutes(dayTime);
+        long absoluteDayTime = level.getDayTime();
+
+        long day = MadokuTime.getDay(absoluteDayTime);
+        int totalMinutes = MadokuTime.getTotalMinutes(absoluteDayTime);
         int hour = totalMinutes / 60;
         int minute = totalMinutes % 60;
 
@@ -139,7 +157,7 @@ public final class MadokuHud {
     }
 
     private static void renderHealthHud(GuiGraphics context, DeltaTracker tickCounter, HudElement oldElement) {
-        if (!HudJsonConfigSystem.healthHudEnabled()) {
+        if (!settings.healthHudEnabled) {
             oldElement.render(context, tickCounter);
             return;
         }
@@ -210,7 +228,7 @@ public final class MadokuHud {
     }
 
     private static void renderHungerHud(GuiGraphics context, DeltaTracker tickCounter, HudElement oldElement) {
-        if (!HudJsonConfigSystem.hungerHudEnabled()) {
+        if (!settings.hungerHudEnabled) {
             oldElement.render(context, tickCounter);
             return;
         }
@@ -266,7 +284,7 @@ public final class MadokuHud {
     }
 
     private static void renderArmorHud(GuiGraphics context, DeltaTracker tickCounter, HudElement oldElement) {
-        if (!HudJsonConfigSystem.armorHudEnabled()) {
+        if (!settings.armorHudEnabled) {
             oldElement.render(context, tickCounter);
             return;
         }
@@ -322,7 +340,7 @@ public final class MadokuHud {
     }
 
     private static void renderOxygenHud(GuiGraphics context, DeltaTracker tickCounter, HudElement oldElement) {
-        if (!HudJsonConfigSystem.oxygenHudEnabled()) {
+        if (!settings.oxygenHudEnabled) {
             oldElement.render(context, tickCounter);
             return;
         }
@@ -610,6 +628,128 @@ public final class MadokuHud {
 
     private static int clampInt(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    private static void loadClientConfig() {
+        JsonObject defaults = Settings.defaults().toConfigJson();
+        Settings fallback = Settings.defaults();
+
+        try {
+            Path directory = StaticJsonSystem.getOrCreateGlobalSystemDirectory(HUD_CONFIG_FOLDER_NAME);
+            Path configFile = resolveJsonFile(directory, HUD_CONFIG_FILE_NAME);
+            JsonObject normalized = StaticJsonSystem.ensureManagedFile(configFile, defaults);
+            Settings loaded = Settings.fromJson(normalized);
+            StaticJsonSystem.writeManagedFile(configFile, loaded.toConfigJson(), defaults);
+            settings = loaded;
+        } catch (IOException | RuntimeException exception) {
+            settings = fallback;
+            LOGGER.error("Failed to load MadokuHud client config; using defaults.", exception);
+        }
+    }
+
+    private static Path resolveJsonFile(Path directory, String fileName) {
+        String normalized = fileName == null ? "" : fileName.trim();
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("Config file name must not be blank.");
+        }
+        if (!normalized.endsWith(".json")) {
+            normalized = normalized + ".json";
+        }
+        return directory.resolve(normalized);
+    }
+
+    private static boolean getBoolean(JsonObject object, String key, boolean fallback) {
+        if (object == null || key == null || key.isBlank()) {
+            return fallback;
+        }
+        JsonElement element = object.get(key);
+        if (element == null || !element.isJsonPrimitive() || !element.getAsJsonPrimitive().isBoolean()) {
+            return fallback;
+        }
+        try {
+            return element.getAsBoolean();
+        } catch (RuntimeException exception) {
+            return fallback;
+        }
+    }
+
+    private static final class Settings {
+        private final boolean worldHudEnabled;
+        private final boolean healthHudEnabled;
+        private final boolean hungerHudEnabled;
+        private final boolean armorHudEnabled;
+        private final boolean oxygenHudEnabled;
+
+        private Settings(
+            boolean worldHudEnabled,
+            boolean healthHudEnabled,
+            boolean hungerHudEnabled,
+            boolean armorHudEnabled,
+            boolean oxygenHudEnabled
+        ) {
+            this.worldHudEnabled = worldHudEnabled;
+            this.healthHudEnabled = healthHudEnabled;
+            this.hungerHudEnabled = hungerHudEnabled;
+            this.armorHudEnabled = armorHudEnabled;
+            this.oxygenHudEnabled = oxygenHudEnabled;
+        }
+
+        private static Settings defaults() {
+            return new Settings(
+                DEFAULT_WORLD_HUD_ENABLED,
+                DEFAULT_HEALTH_HUD_ENABLED,
+                DEFAULT_HUNGER_HUD_ENABLED,
+                DEFAULT_ARMOR_HUD_ENABLED,
+                DEFAULT_OXYGEN_HUD_ENABLED
+            );
+        }
+
+        private static Settings fromJson(JsonObject source) {
+            Settings defaults = defaults();
+            JsonObject legacyHuds = source != null
+                && source.get("huds") != null
+                && source.get("huds").isJsonObject()
+                ? source.getAsJsonObject("huds")
+                : null;
+
+            return new Settings(
+                getBoolean(
+                    source,
+                    "world_hud_enabled",
+                    getBoolean(legacyHuds, "world_hud", defaults.worldHudEnabled)
+                ),
+                getBoolean(
+                    source,
+                    "health_hud_enabled",
+                    getBoolean(legacyHuds, "health_hud", defaults.healthHudEnabled)
+                ),
+                getBoolean(
+                    source,
+                    "hunger_hud_enabled",
+                    getBoolean(legacyHuds, "hunger_hud", defaults.hungerHudEnabled)
+                ),
+                getBoolean(
+                    source,
+                    "armor_hud_enabled",
+                    getBoolean(legacyHuds, "armor_hud", defaults.armorHudEnabled)
+                ),
+                getBoolean(
+                    source,
+                    "oxygen_hud_enabled",
+                    getBoolean(legacyHuds, "oxygen_hud", defaults.oxygenHudEnabled)
+                )
+            );
+        }
+
+        private JsonObject toConfigJson() {
+            JsonObject root = new JsonObject();
+            root.addProperty("world_hud_enabled", worldHudEnabled);
+            root.addProperty("health_hud_enabled", healthHudEnabled);
+            root.addProperty("hunger_hud_enabled", hungerHudEnabled);
+            root.addProperty("armor_hud_enabled", armorHudEnabled);
+            root.addProperty("oxygen_hud_enabled", oxygenHudEnabled);
+            return root;
+        }
     }
 
     public static void clearOxygenHudState() {
