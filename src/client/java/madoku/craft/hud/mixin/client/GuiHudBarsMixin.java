@@ -1,12 +1,12 @@
 package madoku.craft.hud.mixin.client;
 
-import madoku.craft.hud.HudJsonConfigSystem;
 import madoku.craft.hud.MadokuHud;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.material.Fluid;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,29 +30,23 @@ public abstract class GuiHudBarsMixin {
         Player player,
         int x,
         int y,
-        int height,
-        int offsetHeartIndex,
+        int lines,
+        int regen,
         float maxHealth,
-        int currentHealth,
+        int health,
         int displayHealth,
-        int absorptionAmount,
-        boolean renderHighlight,
+        int absorption,
+        boolean blinking,
         CallbackInfo ci
     ) {
-        if (HudJsonConfigSystem.healthHudEnabled()) {
+        if (MadokuHud.isHealthHudEnabled()) {
             ci.cancel();
         }
     }
 
     @Inject(method = "renderFood", at = @At("HEAD"), cancellable = true)
-    private void madokuCraftHud$hideVanillaFood(
-        GuiGraphics context,
-        Player player,
-        int y,
-        int right,
-        CallbackInfo ci
-    ) {
-        if (HudJsonConfigSystem.hungerHudEnabled()) {
+    private void madokuCraftHud$hideVanillaFood(GuiGraphics context, Player player, int top, int right, CallbackInfo ci) {
+        if (MadokuHud.isHungerHudEnabled()) {
             ci.cancel();
         }
     }
@@ -63,11 +57,18 @@ public abstract class GuiHudBarsMixin {
         Player player,
         int x,
         int y,
-        int armorValue,
-        int heartRows,
+        int width,
+        int armor,
         CallbackInfo ci
     ) {
-        if (HudJsonConfigSystem.armorHudEnabled()) {
+        if (MadokuHud.isArmorHudEnabled()) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderAirBubbles", at = @At("HEAD"), cancellable = true, require = 0)
+    private void madokuCraftHud$hideVanillaAirBubbles(GuiGraphics context, Player player, int top, int left, int air, CallbackInfo ci) {
+        if (MadokuHud.isOxygenHudEnabled()) {
             ci.cancel();
         }
     }
@@ -76,24 +77,27 @@ public abstract class GuiHudBarsMixin {
         method = "renderPlayerHealth",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/GuiGraphics;blitSprite(Lnet/minecraft/resources/ResourceLocation;IIII)V"
+            target = "Lnet/minecraft/world/entity/player/Player;getAirSupply()I"
         )
     )
-    private void madokuCraftHud$hideVanillaAir(
-        GuiGraphics context,
-        ResourceLocation sprite,
-        int x,
-        int y,
-        int width,
-        int height
-    ) {
-        if (HudJsonConfigSystem.oxygenHudEnabled() && isAirHudSprite(sprite)) {
-            return;
+    private int madokuCraftHud$hideVanillaAirSupply(Player player) {
+        if (MadokuHud.isOxygenHudEnabled()) {
+            return player.getMaxAirSupply();
         }
-        context.blitSprite(sprite, x, y, width, height);
+        return player.getAirSupply();
     }
 
-    private static boolean isAirHudSprite(ResourceLocation sprite) {
-        return "minecraft".equals(sprite.getNamespace()) && sprite.getPath().startsWith("hud/air");
+    @Redirect(
+        method = "renderPlayerHealth",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/player/Player;isEyeInFluid(Lnet/minecraft/tags/TagKey;)Z"
+        )
+    )
+    private boolean madokuCraftHud$hideVanillaAirFluidCheck(Player player, TagKey<Fluid> fluidTag) {
+        if (MadokuHud.isOxygenHudEnabled()) {
+            return false;
+        }
+        return player.isEyeInFluid(fluidTag);
     }
 }
