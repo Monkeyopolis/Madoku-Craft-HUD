@@ -3,12 +3,12 @@
 	"id": "madoku-craft-hud",
 	"version": "${version}",
 	"name": "Madoku Craft HUD",
-	"description": "Custom HUD overlays for Madoku Craft using API time systems and vanilla player stats.",
+	"description": "A configurable HUD overhaul system.",
 	"authors": [
-		"Madoku Craft"
+		"Monkeyopolis"
 	],
 	"contact": {
-		"homepage": "https://modrinth.com/mod/madoku-craft-hud"
+		"homepage": "https://github.com/Monkeyopolis/Madoku-Craft-HUD"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/madoku-craft-hud/icon.png",
@@ -25,9 +25,9 @@
 		]
 	},
 	"depends": {
-		"fabricloader": ">=0.18.4",
-		"minecraft": "~1.21.11",
-		"java": ">=21",
+		"fabricloader": ">=0.18.5",
+		"minecraft": "~26.1",
+		"java": ">=25",
 		"fabric-api": "*",
 		"madoku-craft-api": ">=${madoku_craft_api_mod_version}"
 	}
