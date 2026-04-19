@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import madoku.craft.config.StaticJsonSystem;
 import madoku.craft.hud.mixin.client.GuiAccessor;
+import madoku.craft.season.MadokuSeason;
 import madoku.craft.time.MadokuTime;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -95,10 +96,13 @@ public final class MadokuHud {
     private static final boolean DEFAULT_HUNGER_HUD_ENABLED = true;
     private static final boolean DEFAULT_ARMOR_HUD_ENABLED = true;
     private static final boolean DEFAULT_OXYGEN_HUD_ENABLED = true;
+    private static final boolean DEFAULT_SEASON_HUD_ENABLED = true;
     private static final String HUD_CONFIG_FOLDER_NAME = "madoku-craft-hud";
     private static final String HUD_CONFIG_FILE_NAME = "madoku-hud";
     private static volatile boolean initialized = false;
     private static volatile Settings settings = Settings.defaults();
+    private static volatile String serverSeason = "spring";
+    private static volatile boolean hasServerSeason = false;
     private static volatile int cachedAirSupply = 300;
     private static volatile int cachedMaxAirSupply = 300;
     private static volatile int cachedOxygenPoints = 10;
@@ -150,10 +154,12 @@ public final class MadokuHud {
         int minute = totalMinutes % 60;
 
         drawScaledString(context, client, "Day: " + displayDay(day), WORLD_X, WORLD_Y, COLOR);
-        int secondLineY = lineOffset(client, 1);
-        drawScaledString(context, client, "Time: " + hour + ":" + twoDigits(minute), WORLD_X, secondLineY, COLOR);
-        int thirdLineY = lineOffset(client, 2);
-        drawScaledString(context, client, "Biome: " + getBiomeDisplayName(player, level), WORLD_X, thirdLineY, COLOR);
+        int lineIndex = 1;
+        drawScaledString(context, client, "Time: " + hour + ":" + twoDigits(minute), WORLD_X, lineOffset(client, lineIndex++), COLOR);
+        drawScaledString(context, client, "Biome: " + getBiomeDisplayName(player, level), WORLD_X, lineOffset(client, lineIndex++), COLOR);
+        if (settings.seasonHudEnabled && MadokuSeason.isEnabled() && hasServerSeason) {
+            drawScaledString(context, client, "Season: " + getSeasonDisplayText(), WORLD_X, lineOffset(client, lineIndex), COLOR);
+        }
     }
 
     private static void renderHealthHud(GuiGraphics context, DeltaTracker tickCounter, HudElement oldElement) {
@@ -434,6 +440,21 @@ public final class MadokuHud {
         return rawDay + 1L;
     }
 
+    private static String getSeasonDisplayText() {
+        if (!hasServerSeason) {
+            return "Unknown";
+        }
+        return capitalizeWord(serverSeason);
+    }
+
+    private static String capitalizeWord(String value) {
+        if (value == null || value.isBlank()) {
+            return "Unknown";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        return Character.toUpperCase(normalized.charAt(0)) + normalized.substring(1);
+    }
+
     private static boolean isBlinking(Gui gui, int ticks) {
         long healthBlinkTime = ((GuiAccessor) gui).madokuCraftHud$getHealthBlinkTime();
         long currentTicks = ticks;
@@ -679,19 +700,22 @@ public final class MadokuHud {
         private final boolean hungerHudEnabled;
         private final boolean armorHudEnabled;
         private final boolean oxygenHudEnabled;
+        private final boolean seasonHudEnabled;
 
         private Settings(
             boolean worldHudEnabled,
             boolean healthHudEnabled,
             boolean hungerHudEnabled,
             boolean armorHudEnabled,
-            boolean oxygenHudEnabled
+            boolean oxygenHudEnabled,
+            boolean seasonHudEnabled
         ) {
             this.worldHudEnabled = worldHudEnabled;
             this.healthHudEnabled = healthHudEnabled;
             this.hungerHudEnabled = hungerHudEnabled;
             this.armorHudEnabled = armorHudEnabled;
             this.oxygenHudEnabled = oxygenHudEnabled;
+            this.seasonHudEnabled = seasonHudEnabled;
         }
 
         private static Settings defaults() {
@@ -700,7 +724,8 @@ public final class MadokuHud {
                 DEFAULT_HEALTH_HUD_ENABLED,
                 DEFAULT_HUNGER_HUD_ENABLED,
                 DEFAULT_ARMOR_HUD_ENABLED,
-                DEFAULT_OXYGEN_HUD_ENABLED
+                DEFAULT_OXYGEN_HUD_ENABLED,
+                DEFAULT_SEASON_HUD_ENABLED
             );
         }
 
@@ -737,6 +762,11 @@ public final class MadokuHud {
                     source,
                     "oxygen_hud_enabled",
                     getBoolean(legacyHuds, "oxygen_hud", defaults.oxygenHudEnabled)
+                ),
+                getBoolean(
+                    source,
+                    "season_hud_enabled",
+                    getBoolean(legacyHuds, "season_hud", defaults.seasonHudEnabled)
                 )
             );
         }
@@ -748,8 +778,23 @@ public final class MadokuHud {
             root.addProperty("hunger_hud_enabled", hungerHudEnabled);
             root.addProperty("armor_hud_enabled", armorHudEnabled);
             root.addProperty("oxygen_hud_enabled", oxygenHudEnabled);
+            root.addProperty("season_hud_enabled", seasonHudEnabled);
             return root;
         }
+    }
+
+    public static void setServerSeason(String season) {
+        if (season == null || season.isBlank()) {
+            clearServerSeason();
+            return;
+        }
+        serverSeason = season;
+        hasServerSeason = true;
+    }
+
+    public static void clearServerSeason() {
+        serverSeason = "spring";
+        hasServerSeason = false;
     }
 
     public static void clearOxygenHudState() {
