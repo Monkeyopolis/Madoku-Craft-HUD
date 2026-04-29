@@ -1,6 +1,5 @@
 package madoku.craft.hud;
 
-import madoku.craft.config.StaticJsonSystem;
 import net.fabricmc.api.ModInitializer;
 
 public class Madokucrafthud implements ModInitializer {
@@ -8,6 +7,6 @@ public class Madokucrafthud implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        StaticJsonSystem.initialize();
+        // No common initialization needed.
     }
 }
