@@ -1,8 +1,7 @@
-## Madoku Craft: HUD
+## Overview
 
-Madoku Craft: HUD overhauls Minecraft's HUD system.
+Madoku Craft: HUD overhauls Minecraft's UI.
 It simplifies the UI to display more information.
-You can disable which UIs are displayed in the CONFIG file.
 
 ## Dependencies:
 
@@ -11,7 +10,12 @@ You can disable which UIs are displayed in the CONFIG file.
 
 ## Features:
 
-Added a dedicated UI placed on the top left.
-It displays important information about your world.
-The existing UI is replaced with a single icon.
-It also displays text to convey the exact values.
+World HUD:
+
+- It adds a dedicated UI placed on the top left.
+- It displays important information about your world.
+
+Attributes HUD:
+
+- The attributes UI is replaced with a single icon.
+- It also displays text to convey the exact values.
