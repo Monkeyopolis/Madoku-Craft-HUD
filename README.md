@@ -1,4 +1,4 @@
-## Overview
+## Overview:
 
 Madoku Craft: HUD overhauls Minecraft's UI.
 It simplifies the UI to display more information.
