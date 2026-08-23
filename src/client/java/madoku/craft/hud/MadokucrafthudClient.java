@@ -1,6 +1,7 @@
 package madoku.craft.hud;
 
 import madoku.craft.api.season.SeasonPayloadManager;
+import madoku.craft.api.season.PlayerClimatePayloadManager;
 import madoku.craft.api.time.TimePayloadManager;
 import madoku.craft.season.ClientSeasonalPrecipitationState;
 import net.fabricmc.api.ClientModInitializer;
@@ -27,6 +28,9 @@ public class MadokucrafthudClient implements ClientModInitializer {
                 HudPayloadManager.setServerSeason(payload.season());
                 HudPayloadManager.setServerSeasonProgress(payload.seasonDay(), payload.seasonLengthDays());
             })
+        );
+        ClientPlayNetworking.registerGlobalReceiver(PlayerClimatePayloadManager.TYPE, (payload, context) ->
+            context.client().execute(() -> HudPayloadManager.setServerClimate(payload.temperature(), payload.humidity()))
         );
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ClientSeasonalPrecipitationState.clear();

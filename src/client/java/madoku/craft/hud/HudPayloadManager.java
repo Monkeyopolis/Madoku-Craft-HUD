@@ -10,10 +10,13 @@ public final class HudPayloadManager {
 	private static volatile int serverSeasonDay;
 	private static volatile int serverSeasonLengthDays = 28;
 	private static volatile boolean hasServerSeason;
+	private static volatile double serverTemperature = 50.0D;
+	private static volatile double serverHumidity = 50.0D;
+	private static volatile boolean hasServerClimate;
 
 	private HudPayloadManager() { }
 	public static void initialize() { reset(); }
-	public static void reset() { clearServerTime(); clearServerSeason(); }
+	public static void reset() { clearServerTime(); clearServerSeason(); clearServerClimate(); }
 
 	public static void setServerTime(long day, int hour, int minute) {
 		serverDay = Math.max(0L, day);
@@ -43,4 +46,18 @@ public final class HudPayloadManager {
 	public static String getServerSeason() { return serverSeason; }
 	public static int getServerSeasonDay() { return serverSeasonDay; }
 	public static int getServerSeasonLengthDays() { return serverSeasonLengthDays; }
+
+	public static void setServerClimate(double temperature, double humidity) {
+		serverTemperature = Double.isFinite(temperature) ? temperature : 50.0D;
+		serverHumidity = Double.isFinite(humidity) ? humidity : 50.0D;
+		hasServerClimate = true;
+	}
+	public static void clearServerClimate() {
+		serverTemperature = 50.0D;
+		serverHumidity = 50.0D;
+		hasServerClimate = false;
+	}
+	public static boolean hasServerClimate() { return hasServerClimate; }
+	public static double getServerTemperature() { return serverTemperature; }
+	public static double getServerHumidity() { return serverHumidity; }
 }

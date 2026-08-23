@@ -52,7 +52,6 @@ public final class HudAttributesManager {
 	private static final int ARMOR_SIZE = 9;
 	private static final int OXYGEN_SIZE = 9;
 	private static final int VANILLA_MAX_FOOD = 20;
-	private static final int VANILLA_MAX_AIR = 300;
 	private static final int TICKS_PER_SECOND = 20;
 	private static final int OXYGEN_X_OFFSET_RIGHT = 4;
 	private static final int OXYGEN_RIGHT_EDGE = 91;
@@ -63,8 +62,8 @@ public final class HudAttributesManager {
 	private static final float TEXT_SCALE = 0.8F;
 	private static final float HEALTH_STEP = 0.125F;
 	private static final float ARMOR_STEP = 0.25F;
-	private static volatile int cachedAirSupply = VANILLA_MAX_AIR;
-	private static volatile int cachedMaxAirSupply = VANILLA_MAX_AIR;
+	private static volatile int cachedAirSupply = 300;
+	private static volatile int cachedMaxAirSupply = 300;
 	private static volatile int cachedOxygenPoints = 10;
 	private static volatile int previousDisplayedOxygenSeconds = -1;
 	private static volatile int oxygenPopTicksRemaining;
@@ -191,7 +190,7 @@ public final class HudAttributesManager {
 		if (lastOxygenStateUpdateTick == gameTime) return;
 		lastOxygenStateUpdateTick = gameTime;
 		cachedMaxAirSupply = Math.max(1, player.getMaxAirSupply());
-		cachedAirSupply = decodeAir(player.getAirSupply(), cachedMaxAirSupply);
+		cachedAirSupply = MadokuHudManager.clamp(player.getAirSupply(), 0, cachedMaxAirSupply);
 		cachedOxygenPoints = Math.max(0, Math.min(10, (int) Math.ceil(cachedAirSupply * 10.0D / cachedMaxAirSupply)));
 		int seconds = displaySeconds(cachedAirSupply);
 		if (previousDisplayedOxygenSeconds >= 0 && seconds < previousDisplayedOxygenSeconds && seconds > 0) {
@@ -200,13 +199,8 @@ public final class HudAttributesManager {
 		} else if (oxygenPopTicksRemaining > 0) oxygenPopTicksRemaining--;
 		previousDisplayedOxygenSeconds = seconds;
 	}
-	private static int decodeAir(int observed, int max) {
-		int safeMax = Math.max(1, max); int clamped = MadokuHudManager.clamp(observed, 0, safeMax);
-		if (safeMax <= VANILLA_MAX_AIR || clamped > VANILLA_MAX_AIR) return clamped;
-		return MadokuHudManager.clamp((int) Math.round(clamped / (double) VANILLA_MAX_AIR * safeMax), 0, safeMax);
-	}
 	private static int displaySeconds(int ticks) { return (int) Math.ceil(Math.max(0, ticks) / (double) TICKS_PER_SECOND); }
 	private static String oxygenText(int current, int max) { int maxSeconds = Math.max(1, displaySeconds(max)); return "Oxygen: " + Math.min(maxSeconds, displaySeconds(current)) + "/" + maxSeconds; }
 	private static Identifier oxygenTexture(int points) { return points <= 0 ? OXYGEN_EMPTY : oxygenPopTicksRemaining > 0 ? OXYGEN_POPPING : OXYGEN_FULL; }
-	private static void clearOxygenHudState() { cachedAirSupply = VANILLA_MAX_AIR; cachedMaxAirSupply = VANILLA_MAX_AIR; cachedOxygenPoints = 10; previousDisplayedOxygenSeconds = -1; oxygenPopTicksRemaining = 0; lastOxygenStateUpdateTick = Long.MIN_VALUE; }
+	private static void clearOxygenHudState() { cachedAirSupply = 300; cachedMaxAirSupply = 300; cachedOxygenPoints = 10; previousDisplayedOxygenSeconds = -1; oxygenPopTicksRemaining = 0; lastOxygenStateUpdateTick = Long.MIN_VALUE; }
 }

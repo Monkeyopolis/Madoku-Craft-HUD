@@ -50,9 +50,14 @@ public final class HudAPIManager {
 			minute = totalMinutes % 60;
 		}
 
-		SeasonBiomeClimateManager.Climate climate = ClientSeasonalPrecipitationState.resolveClimate(
-			level.getBiome(player.blockPosition()).value());
-		climate = SeasonEnvironmentTransitionManager.adjustForShelter(level, player.blockPosition(), climate);
+		SeasonBiomeClimateManager.Climate climate = HudPayloadManager.hasServerClimate()
+			? new SeasonBiomeClimateManager.Climate(
+				HudPayloadManager.getServerTemperature(),
+				HudPayloadManager.getServerHumidity())
+			: ClientSeasonalPrecipitationState.resolveClimate(level.getBiome(player.blockPosition()).value());
+		if (!HudPayloadManager.hasServerClimate()) {
+			climate = SeasonEnvironmentTransitionManager.adjustForShelter(level, player.blockPosition(), climate);
+		}
 		int line = 0;
 		if (HudConfigManager.isEnabled("day")) drawLine(context, client, "Day", Long.toString(Math.max(0L, day)), line++ , COLOR);
 		if (HudConfigManager.isEnabled("time")) drawLine(context, client, "Time", hour + ":" + twoDigits(minute), line++, HudConfigManager.isColored("time") ? timeColor(hour * 60 + minute) : COLOR);
