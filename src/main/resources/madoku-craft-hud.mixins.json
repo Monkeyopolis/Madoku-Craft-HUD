@@ -1,12 +1,12 @@
 {
   "required": true,
-  "package": "madoku.craft.hud.mixin",
+  "package": "madoku.craft.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [
-    "client.GuiAccessor"
+    "hud.GuiAccessor",
+    "season.BiomeSeasonalPrecipitationMixin",
+    "season.LevelSeasonalWeatherClientMixin"
   ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+  "injectors": { "defaultRequire": 1 }
 }
